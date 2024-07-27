@@ -2,102 +2,69 @@
 // © opulencesniper
 
 //@version=5
-indicator("oi",overlay = true)
-expiry_date=input.string("240718", title = "Expiry Date")
-current_price = input.price(24600, title = "Current Price")
-band_number = input.int(3, title = "Strikes Band")
-strike_diff = input.float(50.0,title = "Strike Difference")
+indicator("Trader Opulence Sniper",overlay = true)
+//------------------------------ Inputs ------------------------------//
 
-atm = int(current_price/strike_diff)*strike_diff
-symbol=syminfo.root
+show_table = input(true, 'Show Detailed Table', group = 'Real Volumes')
+nifty_price =input.float(24851,title = "Nifty Price", group = 'Real Volumes')
+expiry_date=input.string("240801", title = "Expiry Date", group = 'Real Volumes')
+band_number = input.int(3, title = "Strikes Band", group = 'Real Volumes')
+strike_diff = input.float(50.0,title = "Strike Difference", group = 'Real Volumes')
 
-get_close_volume_priceChange()=>
-    percentage_change=(close-close[1])*100/close[1]
-    [close, volume, percentage_change]
+show_fvg = input(true, 'Show Fair Value Gaps', group = 'Fair Value Gaps')
 
-get_options_symbol(n)=>
+
+//xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx Inputs xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx//
+
+nifty_symbol="NSE:NIFTY"
+
+get_compare_color(compare_from,compare_to)=>
+  compare_to<compare_from+(compare_from*1/1000) and compare_to>compare_from-(compare_from*1/1000)  ? color.rgb(58, 229, 224, 30) : color.rgb(255, 250, 250, 68)
+
+get_symbol_details(sym, tf)=>
+    [ce_o,ce_h,ce_l,ce_c,ce_v,ce_rsi,ce_ema50,ce_ema200]=request.security(symbol = sym ,timeframe = tf, expression = [open, high, low, close, volume, ta.rsi(close,14),ta.ema(close, 50),ta.ema(close, 200)])
+   
+get_options_symbol(n,symb)=>
+    atm = int(nifty_price/strike_diff)*strike_diff
     strike=str.tostring(atm+n*strike_diff)
-    ce=symbol + expiry_date + "C" + strike
-    pe=symbol + expiry_date + "P" + strike
-    [ce_value, ce_volume, ce_change]=request.security(ce,"5",get_close_volume_priceChange())
-    [pe_value, pe_volume, pe_change]=request.security(pe,"5",get_close_volume_priceChange())
-    [ce_value, ce_volume, ce_change, pe_value, pe_volume, pe_change]
+    ce=symb + expiry_date + "C" + strike
+    pe=symb + expiry_date + "P" + strike
+    [ce_o,ce_h,ce_l,ce_c,ce_v,ce_rsi,ce_ema50,ce_ema200]=get_symbol_details(ce,"5")
+    [pe_o,pe_h,pe_l,pe_c,pe_v,pe_rsi,pe_ema50,pe_ema200]=get_symbol_details(pe,"5")
+    [strike,ce_o,ce_h,ce_l,ce_c,ce_v,ce_rsi,ce_ema50,ce_ema200,pe_o,pe_h,pe_l,pe_c,pe_v,pe_rsi,pe_ema50,pe_ema200]
 
-var table data = table.new(position.bottom_right, 20, 20, border_color=color.black)
+if show_table
+    var table detailed_table = table.new(position.bottom_right, 20, 20,border_color = color.navy, border_width = 2)
 
-// Set table headers
-if (bar_index == 0)  // Only set headers once
-    table.cell(data, 0, 0, "Nifty",  text_color=color.white)
-    table.cell(data, 0, 1, "B-Nif",  text_color=color.white)
-    table.cell(data, 0, 2, "HDFC",  text_color=color.white)
-    table.cell(data, 0, 3, "KOTAC",  text_color=color.white)
-    table.cell(data, 0, 4, "AXIS",  text_color=color.white)
-    table.cell(data, 0, 5, "ICICI",  text_color=color.white)
-    table.cell(data, 0, 6, "REL",  text_color=color.white)
-    table.cell(data, 0, 7, "BAJAJ",  text_color=color.white)
-    table.cell(data, 0, 8, "INFO",  text_color=color.white)
-    table.cell(data, 0, 9, "TATA-M",  text_color=color.white)
-
-// Populate table with data
-[c,v,cc]=get_close_volume_priceChange()
-table.cell(data, 1, 0, str.tostring(c), text_color=color.white)
-table.cell(data, 1, 1, str.tostring(v), text_color=color.white)
-table.cell(data, 1, 2, str.tostring(cc), text_color=color.white)
-
-
-table.cell(data, 2, 0, "PE", text_color=color.white)
-table.cell(data, 2, 1, "PE", text_color=color.white)
-
-// OI
-
-table.cell(data, 3, 0, "Delta", text_color=color.white)
-table.cell(data, 3, 1, "Delta", text_color=color.white)
-
-table.cell(data, 4, 0, "Prev-change", text_color=color.white)
-table.cell(data, 4, 1, "Prev-change", text_color=color.white)
-
-
-table.cell(data, 5, 0, "5M-change", text_color=color.white)
-table.cell(data, 5, 1, "5M-change", text_color=color.white)
-
-table.cell(data, 6, 0, "15M-change", text_color=color.white)
-table.cell(data, 6, 1, "15M-change", text_color=color.white)
-
-// EMA
-
-table.cell(data, 7, 0, "5M-EMA", text_color=color.white)
-table.cell(data, 7, 1, "5M-EMA", text_color=color.white)
-
-
-table.cell(data, 8, 0, "15M-EMA", text_color=color.white)
-table.cell(data, 8, 1, "15M-EMA", text_color=color.white)
-
-
-table.cell(data, 9, 0, "D-EMA", text_color=color.white)
-table.cell(data, 9, 1, "D-EMA", text_color=color.white)
-
-// RSI
-
-table.cell(data, 10, 0, "5M-RSI", text_color=color.white)
-table.cell(data, 10, 1, "5M-RSI", text_color=color.white)
-
-table.cell(data, 11, 0, "15M-RSI", text_color=color.white)
-table.cell(data, 11, 1, "15M-RSI", text_color=color.white)
-
-
-table.cell(data, 12, 0, "D-RSI", text_color=color.white)
-table.cell(data, 12, 1, "D-RSI", text_color=color.white)
-
-
-// VOLUME
-
-table.cell(data, 13, 0, "5M-VOL", text_color=color.white)
-table.cell(data, 13, 1, "5M-VOL", text_color=color.white)
-
-table.cell(data, 14, 0, "15M-VOL", text_color=color.white)
-table.cell(data, 14, 1, "15M-VOL", text_color=color.white)
-
-table.cell(data, 15, 0, "D-VOL", text_color=color.white)
-table.cell(data, 15, 1, "D-VOL", text_color=color.white)
-
-
+    // Set table headers
+    if (bar_index == 0)  // Only set headers once
+        table.cell(detailed_table, 0, 0, "SYMBOL",  text_color=color.white)
+        table.cell(detailed_table, 0, 1, "Nifty",  text_color=color.white)
+        table.cell(detailed_table, 0, 2, "B-Nif",  text_color=color.white)
+        table.cell(detailed_table, 0, 3, "HDFC",  text_color=color.white)
+        table.cell(detailed_table, 0, 4, "KOTAC",  text_color=color.white)
+        table.cell(detailed_table, 0, 5, "AXIS",  text_color=color.white)
+        table.cell(detailed_table, 0, 6, "ICICI",  text_color=color.white)
+        table.cell(detailed_table, 0, 7, "RELI",  text_color=color.white)
+        table.cell(detailed_table, 0, 8, "BAJAJ",  text_color=color.white)
+        table.cell(detailed_table, 0, 9, "INFO",  text_color=color.white)
+        table.cell(detailed_table, 0, 10, "TATA-M",  text_color=color.white)
+        table.cell(detailed_table,1,0,"CE_VOL",text_color=color.white)
+        table.cell(detailed_table,2,0,"PE_VOL",text_color=color.white)
+        table.cell(detailed_table,3,0,"DELTA",text_color=color.white)
+        table.cell(detailed_table,4,0,"5M_VC",text_color=color.white)
+        table.cell(detailed_table,5,0,"15M_VC",text_color=color.white)
+        table.cell(detailed_table,6,0,"D_VC",text_color=color.white)
+        table.cell(detailed_table,7,0,"5M_EMA",text_color=color.white)
+        table.cell(detailed_table,8,0,"15M_EMA",text_color=color.white)
+        table.cell(detailed_table,9,0,"D_EMA",text_color=color.white)
+        table.cell(detailed_table,10,0,"5M_RSI",text_color=color.white)
+        table.cell(detailed_table,11,0,"15M_RSI",text_color=color.white)
+        table.cell(detailed_table,12,0,"D_RSI",text_color=color.white)
+        table.cell(detailed_table,13,0,"5M_F_V",text_color=color.white)
+        table.cell(detailed_table,14,0,"15M_F_V",text_color=color.white)
+        table.cell(detailed_table,15,0,"D_F_V",text_color=color.white)
+    
+    
+    [strike,ce_o,ce_h,ce_l,ce_c,ce_v,ce_rsi,ce_ema50,ce_ema200,pe_o,pe_h,pe_l,pe_c,pe_v,pe_rsi,pe_ema50,pe_ema200]=get_options_symbol(0,nifty_symbol)
+    table.cell(detailed_table,1,1,str.tostring(ce_ema50,format.mintick))
