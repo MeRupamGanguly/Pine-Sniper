@@ -1,0 +1,103 @@
+// This Pine Script™ code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © opulencesniper
+
+//@version=5
+indicator("oi",overlay = true)
+expiry_date=input.string("240718", title = "Expiry Date")
+current_price = input.price(24600, title = "Current Price")
+band_number = input.int(3, title = "Strikes Band")
+strike_diff = input.float(50.0,title = "Strike Difference")
+
+atm = int(current_price/strike_diff)*strike_diff
+symbol=syminfo.root
+
+get_close_volume_priceChange()=>
+    percentage_change=(close-close[1])*100/close[1]
+    [close, volume, percentage_change]
+
+get_options_symbol(n)=>
+    strike=str.tostring(atm+n*strike_diff)
+    ce=symbol + expiry_date + "C" + strike
+    pe=symbol + expiry_date + "P" + strike
+    [ce_value, ce_volume, ce_change]=request.security(ce,"5",get_close_volume_priceChange())
+    [pe_value, pe_volume, pe_change]=request.security(pe,"5",get_close_volume_priceChange())
+    [ce_value, ce_volume, ce_change, pe_value, pe_volume, pe_change]
+
+var table data = table.new(position.bottom_right, 20, 20, border_color=color.black)
+
+// Set table headers
+if (bar_index == 0)  // Only set headers once
+    table.cell(data, 0, 0, "Nifty",  text_color=color.white)
+    table.cell(data, 0, 1, "B-Nif",  text_color=color.white)
+    table.cell(data, 0, 2, "HDFC",  text_color=color.white)
+    table.cell(data, 0, 3, "KOTAC",  text_color=color.white)
+    table.cell(data, 0, 4, "AXIS",  text_color=color.white)
+    table.cell(data, 0, 5, "ICICI",  text_color=color.white)
+    table.cell(data, 0, 6, "REL",  text_color=color.white)
+    table.cell(data, 0, 7, "BAJAJ",  text_color=color.white)
+    table.cell(data, 0, 8, "INFO",  text_color=color.white)
+    table.cell(data, 0, 9, "TATA-M",  text_color=color.white)
+
+// Populate table with data
+[c,v,cc]=get_close_volume_priceChange()
+table.cell(data, 1, 0, str.tostring(c), text_color=color.white)
+table.cell(data, 1, 1, str.tostring(v), text_color=color.white)
+table.cell(data, 1, 2, str.tostring(cc), text_color=color.white)
+
+
+table.cell(data, 2, 0, "PE", text_color=color.white)
+table.cell(data, 2, 1, "PE", text_color=color.white)
+
+// OI
+
+table.cell(data, 3, 0, "Delta", text_color=color.white)
+table.cell(data, 3, 1, "Delta", text_color=color.white)
+
+table.cell(data, 4, 0, "Prev-change", text_color=color.white)
+table.cell(data, 4, 1, "Prev-change", text_color=color.white)
+
+
+table.cell(data, 5, 0, "5M-change", text_color=color.white)
+table.cell(data, 5, 1, "5M-change", text_color=color.white)
+
+table.cell(data, 6, 0, "15M-change", text_color=color.white)
+table.cell(data, 6, 1, "15M-change", text_color=color.white)
+
+// EMA
+
+table.cell(data, 7, 0, "5M-EMA", text_color=color.white)
+table.cell(data, 7, 1, "5M-EMA", text_color=color.white)
+
+
+table.cell(data, 8, 0, "15M-EMA", text_color=color.white)
+table.cell(data, 8, 1, "15M-EMA", text_color=color.white)
+
+
+table.cell(data, 9, 0, "D-EMA", text_color=color.white)
+table.cell(data, 9, 1, "D-EMA", text_color=color.white)
+
+// RSI
+
+table.cell(data, 10, 0, "5M-RSI", text_color=color.white)
+table.cell(data, 10, 1, "5M-RSI", text_color=color.white)
+
+table.cell(data, 11, 0, "15M-RSI", text_color=color.white)
+table.cell(data, 11, 1, "15M-RSI", text_color=color.white)
+
+
+table.cell(data, 12, 0, "D-RSI", text_color=color.white)
+table.cell(data, 12, 1, "D-RSI", text_color=color.white)
+
+
+// VOLUME
+
+table.cell(data, 13, 0, "5M-VOL", text_color=color.white)
+table.cell(data, 13, 1, "5M-VOL", text_color=color.white)
+
+table.cell(data, 14, 0, "15M-VOL", text_color=color.white)
+table.cell(data, 14, 1, "15M-VOL", text_color=color.white)
+
+table.cell(data, 15, 0, "D-VOL", text_color=color.white)
+table.cell(data, 15, 1, "D-VOL", text_color=color.white)
+
+
